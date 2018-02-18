@@ -1,3 +1,5 @@
+local suit = require("suit")
+
 love.graphics.setDefaultFilter('nearest', 'nearest')
 enemy = {}
 enemies_controller = {}
@@ -18,6 +20,7 @@ end
 
 
 function love.load()
+   pregame = true
    background = love.graphics.newImage('background.png')
    player = {}
    player.x = 0
@@ -94,44 +97,57 @@ end
 
 
 function love.update(dt)
-   player.cooldown = player.cooldown - 1
-   if love.keyboard.isDown("right") then
-      player.x = player.x + player.speed
-   elseif love.keyboard.isDown("left") then
-      player.x = player.x - player.speed
-   end
-
-   if love.keyboard.isDown("space") then
-      player.fire()
-   end
-
-   enemies_controller:set_directions()
-
-   for _, e in pairs(enemies_controller.enemies) do
-      if enemies_controller.direction == "right" then
-         e.x = e.x + enemies_controller.speed
-      elseif enemies_controller.direction == "left" then
-         e.x = e.x - enemies_controller.speed
+   if pregame then
+      suit.layout:reset(100, 100)
+      suit.layout:padding(10, 10)
+      if suit.Button("Start Game!", suit.layout:row(300, 30)).hit then
+         pregame = false
       end
-      if e.y + e.height >= love.graphics.getHeight() then
-         game_over = true
+      if suit.Button("Quit", suit.layout:row()).hit then
+         love.event.quit()
       end
-   end
+   else
+      player.cooldown = player.cooldown - 1
+      if love.keyboard.isDown("right") then
+         player.x = player.x + player.speed
+      elseif love.keyboard.isDown("left") then
+         player.x = player.x - player.speed
+      end
 
-   for i,b in ipairs(player.bullets) do
-      if b.y < -10 then
-         table.remove(player.bullets, i)
+      if love.keyboard.isDown("space") then
+         player.fire()
       end
-      b.y = b.y - 10
-   end
-   check_collisions(enemies_controller.enemies, player.bullets)
-   if #enemies_controller.enemies == 0 then
-      game_win = true
+
+      enemies_controller:set_directions()
+
+      for _, e in pairs(enemies_controller.enemies) do
+         if enemies_controller.direction == "right" then
+            e.x = e.x + enemies_controller.speed
+         elseif enemies_controller.direction == "left" then
+            e.x = e.x - enemies_controller.speed
+         end
+         if e.y + e.height >= love.graphics.getHeight() then
+            game_over = true
+         end
+      end
+
+      for i,b in ipairs(player.bullets) do
+         if b.y < -10 then
+            table.remove(player.bullets, i)
+         end
+         b.y = b.y - 10
+      end
+      check_collisions(enemies_controller.enemies, player.bullets)
+      if #enemies_controller.enemies == 0 then
+         game_win = true
+      end
    end
 end
 
 function love.draw()
-   if game_over then
+   if pregame then
+      -- pass
+   elseif game_over then
       love.graphics.print("Game Over!")
    elseif game_win then
       love.graphics.print("You win!")
@@ -153,4 +169,5 @@ function love.draw()
          love.graphics.rectangle("fill", v.x, v.y, 10, 10)
       end
    end
+   suit.draw()
 end
